@@ -1,0 +1,131 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: 700px; background: white; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 20px;">
+    <h2 style="color: #1e293b; margin-top: 0;">Allocate Participation Marks</h2>
+    <p style="color: #64748b;">Type a student’s name or index number, then select the correct student.</p>
+
+    {% if success %}
+        <div style="background: #d1fae5; color: #065f46; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-weight: 600;">
+            Successfully added points for {{ selected_student.full_name }}! New Total: {{ selected_student.total_points }} points.
+            <p style="margin: 8px 0 0; font-weight: 400;">{{ sms_message }}</p>
+        </div>
+        <a href="{% url 'add_marks' %}" style="background: #2563eb; color: white; padding: 10px 16px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Allocate More Marks</a>
+        <br><br>
+    {% else %}
+        <form method="GET" action="{% url 'add_marks' %}" style="margin-bottom: 20px;">
+            <label for="student-search" style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Search Student (Name, Index Number, or Phone):</label>
+            <div style="display: flex; gap: 10px;">
+                <input id="student-search" type="search" name="q" value="{{ query }}" autocomplete="off" placeholder="Start typing a name, index number, or phone" aria-controls="student-results" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+                <button type="submit" style="background: #176b52; color: white; border: none; padding: 10px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;">Search</button>
+            </div>
+        </form>
+
+        <p id="student-search-status" role="status" aria-live="polite" style="color: #64748b;">
+            {% if query %}{% if students %}Matching students:{% else %}No matching students found.{% endif %}{% endif %}
+        </p>
+        <ul id="student-results" data-search-url="{% url 'student_search_api' %}" data-add-url="{% url 'add_marks' %}" style="list-style: none; padding: 0; margin: 0 0 20px;">
+            {% for student in students %}
+                <li style="padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    <span>{{ student.full_name }} ({{ student.index_number }}) - Total: {{ student.total_points }}/10</span>
+                    <a href="{% url 'add_marks' %}?student_id={{ student.pk }}" style="background: #176b52; color: white; padding: 7px 12px; border-radius: 4px; text-decoration: none; font-weight: 600;">Select</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        {% if selected_student %}
+            <form method="POST" action="{% url 'add_marks' %}?student_id={{ selected_student.pk }}" style="background: #f1f5f9; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                {% csrf_token %}
+                <h3 style="margin-top: 0; color: #0f172a;">Selected Student: {{ selected_student.full_name }} ({{ selected_student.index_number }})</h3>
+                <p style="color: #475569; font-size: 13px;">Current Total Points: <strong>{{ selected_student.total_points }}</strong></p>
+                <p style="color: #475569; font-size: 13px;">Marks remaining before the maximum of 10: <strong>{{ remaining_points }}</strong></p>
+                {% if error %}<p role="alert" style="color: #b42318; font-weight: 600;">{{ error }}</p>{% endif %}
+
+                <label for="points-to-add" style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Marks to Add (maximum {{ remaining_points }}):</label>
+                <input id="points-to-add" type="number" name="points" value="1" min="1" max="{{ remaining_points }}" required {% if remaining_points == 0 %}disabled{% endif %} style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 15px; box-sizing: border-box;">
+
+                <button type="submit" {% if remaining_points == 0 %}disabled{% endif %} style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">Confirm &amp; Add Marks</button>
+            </form>
+        {% endif %}
+    {% endif %}
+
+    <div style="margin-top: 25px;">
+        <a href="/admin/" style="color: #475569; text-decoration: none; font-weight: 600;">← Back to Main Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('student-search');
+    const resultsList = document.getElementById('student-results');
+    const status = document.getElementById('student-search-status');
+    if (!searchInput || !resultsList || !status) return;
+
+    let debounceTimer;
+    let activeController;
+
+    searchInput.addEventListener('input', () => {
+        window.clearTimeout(debounceTimer);
+        if (activeController) activeController.abort();
+        resultsList.replaceChildren();
+
+        const query = searchInput.value.trim();
+        if (!query) {
+            status.textContent = '';
+            return;
+        }
+
+        status.textContent = 'Searching students...';
+        debounceTimer = window.setTimeout(async () => {
+            activeController = new AbortController();
+            const searchUrl = new URL(resultsList.dataset.searchUrl, window.location.origin);
+            searchUrl.searchParams.set('q', query);
+
+            try {
+                const response = await fetch(searchUrl, {
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                    signal: activeController.signal
+                });
+                if (!response.ok) throw new Error('Search failed');
+                const data = await response.json();
+                resultsList.replaceChildren();
+
+                if (!data.students.length) {
+                    status.textContent = 'No matching students found.';
+                    return;
+                }
+
+                status.textContent = 'Select the student to enter marks.';
+                data.students.forEach((student) => {
+                    const item = document.createElement('li');
+                    item.style.cssText = 'padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px;';
+
+                    const description = document.createElement('span');
+                    description.textContent = `${student.full_name} (${student.index_number}) - Total: ${student.total_points}/10`;
+
+                    const selectLink = document.createElement('a');
+                    const addUrl = new URL(resultsList.dataset.addUrl, window.location.origin);
+                    addUrl.searchParams.set('student_id', student.id);
+                    selectLink.href = addUrl;
+                    selectLink.textContent = 'Select';
+                    selectLink.style.cssText = 'background: #176b52; color: white; padding: 7px 12px; border-radius: 4px; text-decoration: none; font-weight: 600;';
+
+                    item.append(description, selectLink);
+                    resultsList.append(item);
+                });
+            } catch (error) {
+                if (error.name !== 'AbortError') status.textContent = 'Could not search students. Refresh the page and try again.';
+            }
+        }, 250);
+    });
+
+    const pointsInput = document.getElementById('points-to-add');
+    if (pointsInput) pointsInput.addEventListener('input', () => {
+        if (Number(pointsInput.value) > Number(pointsInput.max)) pointsInput.value = pointsInput.max;
+    });
+});
+</script>
+{% endblock %}

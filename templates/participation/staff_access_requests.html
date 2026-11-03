@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Access Requests | Class Participation{% endblock %}
+{% block content %}
+<main id="content-main" style="max-width: 900px;">
+    <h1>Staff access requests</h1>
+    <p>Verify each requester before approval. Approved users receive mark-entry access only; they cannot manage users, groups, or permissions.</p>
+
+    {% for message in messages %}
+        <p role="status" class="messagelist">{{ message }}</p>
+    {% endfor %}
+
+    {% if pending_users %}
+        <div class="module">
+            <table>
+                <thead>
+                    <tr><th>Username</th><th>Email</th><th>Requested</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for requested_user in pending_users %}
+                        <tr>
+                            <th>{{ requested_user.username }}</th>
+                            <td>{{ requested_user.email|default:"Not provided" }}</td>
+                            <td>{{ requested_user.date_joined }}</td>
+                            <td>
+                                <form method="post" action="{% url 'staff_access_requests' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="user_id" value="{{ requested_user.pk }}">
+                                    <button type="submit">Approve mark-entry access</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>There are no pending requests.</p>
+    {% endif %}
+</main>
+{% endblock %}

@@ -1,0 +1,205 @@
+/* Custom Admin Theme (Phase 2) */
+
+/* 1. Override the Default Header Container */
+#header {
+    display: none !important; /* Hide Django's old header */
+}
+
+/* 2. Style our New Custom Header */
+#custom-header {
+    background-color: #0f172a; /* Main Dark Blue/Navy */
+    color: #f8fafc;
+    padding: 15px 30px;
+    border-bottom: 3px solid #10b981; /* GreenAccent line */
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#site-name a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1.6em;
+    font-weight: 700;
+}
+
+.user-tools {
+    font-size: 0.9em;
+    color: #94a3b8;
+}
+
+.user-tools span {
+    color: #ffffff;
+    font-weight: 600;
+    margin-right: 15px;
+}
+
+.user-tools a {
+    color: #38bdf8; /* Accent light blue for links */
+    text-decoration: none;
+    margin: 0 5px;
+}
+
+.user-tools a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.logout-form {
+    display: inline;
+    margin: 0 5px;
+}
+
+.logout-form button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #38bdf8;
+    font: inherit;
+    cursor: pointer;
+}
+
+.logout-form button:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* 3. High Contrast Content Background */
+body {
+    background-color: #f1f5f9; /* Light Grey Body */
+    color: #334155;
+}
+
+#custom-main-content {
+    background: #ffffff;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* 4. Fix Internal Table Styles to match Theme */
+table thead th {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+table tr.selected td {
+    background-color: #dbeafe !important;
+}
+
+@media (max-width: 700px) {
+    #custom-header {
+        padding: 14px 16px;
+    }
+
+    .header-content {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    #site-name {
+        margin: 0;
+        line-height: 1.25;
+    }
+
+    #site-name a {
+        font-size: 1.3em;
+        overflow-wrap: anywhere;
+    }
+
+    .user-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        line-height: 1.5;
+    }
+
+    .user-tools span {
+        margin-right: 0;
+    }
+
+    .user-tools a {
+        margin: 0;
+    }
+
+    .logout-form {
+        margin: 0;
+    }
+
+    #custom-main-content {
+        margin: 10px;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+    }
+
+    #custom-main-content > h1,
+    #custom-main-content > h2,
+    #custom-main-content h1,
+    #custom-main-content h2,
+    #custom-main-content h3,
+    #custom-main-content label,
+    #custom-main-content p,
+    #custom-main-content a {
+        overflow-wrap: anywhere;
+    }
+
+    #custom-main-content > div[style*="max-width: 700px"] {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+        margin-top: 8px !important;
+        padding: 14px !important;
+    }
+
+    #custom-main-content form > div[style*="display: flex"] {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #custom-main-content input[type="search"],
+    #custom-main-content input[type="number"],
+    #custom-main-content select,
+    #custom-main-content textarea {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #custom-main-content ul li[style*="display: flex"] {
+        align-items: stretch !important;
+        flex-direction: column !important;
+    }
+
+    #custom-main-content ul li a {
+        align-self: flex-start;
+        text-align: center;
+    }
+
+    #custom-main-content table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 380px) {
+    #custom-header {
+        padding: 12px;
+    }
+
+    #custom-main-content {
+        margin: 6px;
+        padding: 10px;
+    }
+
+    #custom-main-content > div[style*="max-width: 700px"] {
+        padding: 12px !important;
+    }
+}

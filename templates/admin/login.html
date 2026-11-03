@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+{% block content %}
+<div id="content-main">
+    {% if form.errors and not form.non_field_errors %}
+        <p class="errornote">Please enter the correct username and password for a staff account.</p>
+    {% endif %}
+    {% if form.non_field_errors %}
+        <p class="errornote">{{ form.non_field_errors }}</p>
+    {% endif %}
+    <form action="{% url 'admin:login' %}" method="post" id="login-form">
+        {% csrf_token %}
+        <div class="form-row">
+            {{ form.username.errors }}
+            {{ form.username.label_tag }}
+            {{ form.username }}
+        </div>
+        <div class="form-row">
+            {{ form.password.errors }}
+            {{ form.password.label_tag }}
+            {{ form.password }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="submit-row">
+            <input type="submit" value="Log in">
+        </div>
+    </form>
+    <p style="margin-top: 16px; color: #334155;">
+        If you were invited to create the mark-entry account, use the private invitation link sent by the administrator.
+        A valid invitation is required before you can access the mark-entry tools.
+    </p>
+    <p><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#123c72">
+    <title>Staff Account Invitation | Class Participation</title>
+    <link rel="stylesheet" href="{% static 'participation/registration.css' %}">
+</head>
+<body>
+    <main class="registration-shell">
+        <header class="school-heading">
+            <div class="school-mark" aria-hidden="true">CP</div>
+            <div>
+                <p class="school-eyebrow">CLASS PARTICIPATION</p>
+                <h1>Staff account setup</h1>
+            </div>
+        </header>
+
+        <section class="registration-panel" aria-labelledby="form-title">
+            <div class="panel-heading">
+                <p class="section-label">PRIVATE INVITATION</p>
+                <h2 id="form-title">Create the mark-entry account</h2>
+                <p class="panel-intro">Only the invited email address can claim the single mark-entry account. Your password is private and cannot be viewed by administrators.</p>
+            </div>
+
+            {% if created %}
+                <div class="notice notice--success" role="status">Your account is ready. You can now sign in to the class participation admin.</div>
+                <div class="signup-actions"><a class="submit-button signup-link" href="{% url 'admin:login' %}">Go to sign in <span aria-hidden="true">&rarr;</span></a></div>
+            {% elif seat_claimed %}
+                <div class="notice notice--error" role="alert">The single mark-entry account has already been claimed. Contact the system administrator if you need help.</div>
+            {% elif role_not_configured %}
+                <div class="notice notice--error" role="alert">The mark-entry role is not set up yet. Please contact the system administrator.</div>
+            {% elif invalid_invitation %}
+                <div class="notice notice--error" role="alert">
+                    This invitation is invalid, expired, or has already been used. Use the exact private invitation link sent to your email, or ask the administrator to send a new invitation.
+                </div>
+            {% else %}
+                <form method="post" action="{% url 'staff_signup' %}" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="token" value="{{ token }}">
+                    {% if form.website %}{{ form.website }}{% endif %}
+                    <p class="invited-email">Invitation sent to <strong>{{ invited_email }}</strong></p>
+                    {% if form.non_field_errors %}<div class="notice notice--error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+
+                    {% for field in form %}
+                        {% if field.name != 'website' %}
+                            <div class="form-field">
+                                <label for="{{ field.id_for_label }}">{{ field.label }} <span aria-hidden="true">*</span></label>
+                                {{ field }}
+                                {% if field.help_text %}<div class="field-hint">{{ field.help_text|safe }}</div>{% endif %}
+                                {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <button class="submit-button" type="submit">Create account <span aria-hidden="true">&rarr;</span></button>
+                    <p class="privacy-note">This is a one-time invitation. The account can award marks and view class records, but cannot administer users or permissions.</p>
+                </form>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

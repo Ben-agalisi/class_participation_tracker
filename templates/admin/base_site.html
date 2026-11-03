@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+    <!-- Link our new custom CSS theme globally -->
+    <link rel="stylesheet" href="{% static 'participation/admin_theme.css' %}">
+{% endblock %}
+
+{% block header %}
+    <!-- Fully Custom, Responsive Header Bar -->
+    <header id="custom-header">
+        <div class="header-content">
+            <h1 id="site-name">
+                <a href="/admin/">Class Participation Portal</a>
+            </h1>
+            {% if user.is_authenticated %}
+                <div class="user-tools">
+                    <span>Welcome, {{ user.get_short_name|default:user.username }}</span>
+                    <a href="{% url 'admin:password_change' %}">Change Password</a> /
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin:participation_staffinvitation_changelist' %}">Staff invitation</a> /
+                    {% endif %}
+                    <form method="post" action="{% url 'admin:logout' %}" class="logout-form">
+                        {% csrf_token %}
+                        <button type="submit">Log Out</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+{% endblock %}
+
+{% block content %}
+    <!-- This renders the actual page content (dashboard or tables) -->
+    <main id="custom-main-content">
+        {{ block.super }}
+    </main>
+{% endblock %}

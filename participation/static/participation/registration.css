@@ -1,0 +1,311 @@
+:root {
+    color-scheme: light;
+    --navy: #123c72;
+    --navy-deep: #0c2d56;
+    --teal: #087e78;
+    --gold: #e6b84a;
+    --ink: #172a3d;
+    --muted: #647486;
+    --line: #d7e0e8;
+    --surface: #ffffff;
+    --page: #f0f4f7;
+    --error: #b42318;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    line-height: 1.5;
+}
+
+.registration-shell {
+    width: min(100% - 32px, 760px);
+    margin: 0 auto;
+    padding: 46px 0 30px;
+}
+
+.school-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.school-mark {
+    display: grid;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    place-items: center;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.school-eyebrow,
+.section-label {
+    margin: 0;
+    color: var(--teal);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+}
+
+.school-heading h1 {
+    margin: 2px 0 0;
+    color: var(--navy-deep);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.registration-panel {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--gold);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 12px 32px rgba(18, 60, 114, .08);
+}
+
+.panel-heading {
+    padding: 26px 30px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.panel-heading h2 {
+    margin: 5px 0 8px;
+    color: var(--navy-deep);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 27px;
+    font-weight: 500;
+}
+
+.panel-intro {
+    max-width: 590px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.registration-panel form {
+    display: grid;
+    gap: 18px;
+    padding: 26px 30px 30px;
+}
+
+.form-field {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+}
+
+.form-field label {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-field label span {
+    color: var(--error);
+}
+
+.form-field input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 11px 13px;
+    border: 1px solid #bdcbd8;
+    border-radius: 5px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+}
+
+.form-field input:focus,
+.consent-field input:focus-visible,
+.submit-button:focus-visible {
+    outline: 3px solid rgba(8, 126, 120, .25);
+    outline-offset: 2px;
+    border-color: var(--teal);
+}
+
+.field-hint,
+.privacy-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.field-error {
+    margin: 0;
+    color: var(--error);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.consent-field {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: #f8fafb;
+}
+
+.consent-field input {
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--teal);
+}
+
+.consent-field label {
+    color: #405467;
+    font-size: 12px;
+}
+
+.submit-button {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 5px;
+    background: var(--navy);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.submit-button:hover {
+    background: var(--navy-deep);
+}
+
+.signup-actions {
+    padding: 0 30px 24px;
+}
+
+.signup-link {
+    text-decoration: none;
+}
+
+.text-link,
+.registration-footer a {
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.text-link:hover,
+.registration-footer a:hover {
+    text-decoration: underline;
+}
+
+.submit-button span {
+    color: var(--gold);
+    font-size: 19px;
+}
+
+.notice {
+    margin: 20px 30px 0;
+    padding: 13px 15px;
+    border-radius: 5px;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+}
+
+.notice--success {
+    border: 1px solid #a6d9c4;
+    background: #e9f7f0;
+    color: #175c43;
+}
+
+.notice--error {
+    border: 1px solid #f1b8b2;
+    background: #fff1f0;
+    color: var(--error);
+}
+
+.registration-footer {
+    padding: 16px 4px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 560px) {
+    .registration-shell {
+        width: min(100% - 20px, 760px);
+        padding: 22px 0 18px;
+    }
+
+    .school-heading {
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .school-mark {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+
+    .school-heading h1 {
+        font-size: 19px;
+    }
+
+    .panel-heading {
+        padding: 20px 18px 16px;
+    }
+
+    .panel-heading h2 {
+        font-size: 23px;
+    }
+
+    .registration-panel form {
+        gap: 16px;
+        padding: 20px 18px 22px;
+    }
+
+    .signup-actions {
+        padding: 0 18px 20px;
+    }
+
+    .notice {
+        margin: 16px 18px 0;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .registration-panel {
+        animation: panel-arrive 260ms ease-out both;
+    }
+
+    @keyframes panel-arrive {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+}
