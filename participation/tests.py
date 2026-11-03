@@ -368,7 +368,12 @@ class StaffInvitationTests(TestCase):
 
 		self.make_invitation()
 		self.client.post(reverse('staff_signup'), self.signup_data())
-		get_user_model().objects.get(username='markrep').delete()
+		staff_user = get_user_model().objects.get(username='markrep')
+		delete_url = reverse('admin:auth_user_delete', args=[staff_user.pk])
+		delete_confirmation = self.client.get(delete_url)
+		self.assertEqual(delete_confirmation.status_code, 200)
+		self.assertNotContains(delete_confirmation, 'Cannot delete user')
+		self.assertEqual(self.client.post(delete_url, {'post': 'yes'}).status_code, 302)
 
 		self.assertFalse(StaffSeat.objects.exists())
 		add_url = reverse('admin:participation_staffinvitation_add')

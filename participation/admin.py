@@ -9,6 +9,8 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 from django import forms
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.core.mail import send_mail
@@ -154,6 +156,19 @@ class StaffSeatAdmin(admin.ModelAdmin):
 
   def has_delete_permission(self, request, obj=None):
     return False
+
+
+class StaffAccountUserAdmin(UserAdmin):
+  def get_deleted_objects(self, objs, request):
+    deleted_objects, model_count, perms_needed, protected = super().get_deleted_objects(
+        objs, request
+    )
+    perms_needed.discard(StaffSeat._meta.verbose_name)
+    return deleted_objects, model_count, perms_needed, protected
+
+
+admin.site.unregister(get_user_model())
+admin.site.register(get_user_model(), StaffAccountUserAdmin)
 
 
 class StudentAdminForm(forms.ModelForm):
