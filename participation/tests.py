@@ -363,6 +363,19 @@ class StaffInvitationTests(TestCase):
 		self.assertEqual(response.status_code, 400)
 		self.assertFalse(get_user_model().objects.filter(username='second').exists())
 
+	def test_same_email_can_be_invited_again_after_staff_account_is_deleted(self):
+		from .models import StaffInvitation, StaffSeat
+
+		self.make_invitation()
+		self.client.post(reverse('staff_signup'), self.signup_data())
+		get_user_model().objects.get(username='markrep').delete()
+
+		self.assertFalse(StaffSeat.objects.exists())
+		self.make_invitation(token='replacement-invitation-token')
+		self.assertEqual(
+				StaffInvitation.objects.filter(email='rep@example.com').count(), 2
+		)
+
 	def test_second_invitation_cannot_claim_the_single_staff_seat(self):
 		from .models import StaffInvitation
 

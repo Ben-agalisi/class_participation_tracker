@@ -51,7 +51,7 @@ class ParticipationLog(models.Model):
 
 
 class StaffInvitation(models.Model):
-  email = models.EmailField(unique=True)
+  email = models.EmailField()
   token_hash = models.CharField(max_length=64, unique=True)
   created_by = models.ForeignKey(
       settings.AUTH_USER_MODEL,
