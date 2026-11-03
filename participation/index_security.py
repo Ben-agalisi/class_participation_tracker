@@ -57,6 +57,22 @@ def hash_index_number(value):
   ).hexdigest()
 
 
+def index_number_last_four(value):
+  digits = ''.join(character for character in value if character.isdigit())
+  return digits[-4:] if len(digits) >= 4 else ''
+
+
+def hash_index_number_last_four(value):
+  suffix = index_number_last_four(value)
+  if not suffix:
+    return ''
+  return hmac.new(
+      _purpose_key('index-suffix-digest'),
+      suffix.encode('utf-8'),
+      hashlib.sha256,
+  ).hexdigest()
+
+
 def encrypt_index_number(value):
   key = base64.urlsafe_b64encode(_purpose_key('index-encryption'))
   return Fernet(key).encrypt(normalize_index_number(value).encode('utf-8')).decode('ascii')

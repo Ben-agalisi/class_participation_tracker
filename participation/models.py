@@ -2,13 +2,21 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
-from .index_security import decrypt_index_number, encrypt_index_number, hash_index_number
+from .index_security import (
+  decrypt_index_number,
+  encrypt_index_number,
+  hash_index_number,
+  hash_index_number_last_four,
+)
 
 
 class Student(models.Model):
   full_name = models.CharField(max_length=150)
   index_number_encrypted = models.TextField()
   index_number_hash = models.CharField(max_length=64, unique=True)
+  index_number_last_four_hash = models.CharField(
+      max_length=64, blank=True, default='', db_index=True
+  )
   phone_number = models.CharField(
       max_length=15, help_text="Format: 0241234567"
   )  # <-- Added phone contact
@@ -30,6 +38,7 @@ class Student(models.Model):
   def index_number(self, value):
     self.index_number_encrypted = encrypt_index_number(value)
     self.index_number_hash = hash_index_number(value)
+    self.index_number_last_four_hash = hash_index_number_last_four(value)
 
   def record_registration_consent(self):
     self.registration_consent = True

@@ -94,6 +94,37 @@ class AddMarksWorkflowTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(response.json()['students'][0]['id'], self.student.id)
 
+	def test_search_matches_last_four_index_digits(self):
+		response = self.client.get(
+				reverse('student_search_api'), {'q': '2345'}
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual([item['id'] for item in response.json()['students']], [self.student.id])
+
+	def test_last_four_search_returns_all_students_with_matching_suffix(self):
+		second_student = Student.objects.create(
+				full_name='Ama Owusu',
+				index_number='UEB9992345',
+				phone_number='0201234567',
+		)
+
+		response = self.client.get(
+				reverse('student_search_api'), {'q': '2345'}
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(
+				{item['id'] for item in response.json()['students']},
+				{self.student.id, second_student.id},
+		)
+
+	def test_last_four_search_is_shown_on_mark_entry_page(self):
+		response = self.client.get(reverse('add_marks'), {'q': '2345'})
+
+		self.assertContains(response, 'Benjamin Mensah')
+		self.assertContains(response, 'UEB12345')
+
 	def test_student_export_download_includes_names_index_numbers_and_marks(self):
 		response = self.client.get(reverse('student_export_csv'))
 

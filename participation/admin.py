@@ -21,7 +21,11 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.urls import reverse
 from functools import wraps
-from .index_security import hash_index_number, normalize_index_number
+from .index_security import (
+  hash_index_number,
+  hash_index_number_last_four,
+  normalize_index_number,
+)
 from .models import ParticipationLog, StaffInvitation, StaffSeat, Student
 
 logger = logging.getLogger(__name__)
@@ -231,13 +235,14 @@ def student_search_api(request):
   query = request.GET.get('q', '')
   results = []
   if query:
-    students = Student.objects.filter(
-      Q(full_name__icontains=query)
-      | Q(phone_number__icontains=query)
-    ).order_by('full_name')
-    students = students | Student.objects.filter(
-        index_number_hash=hash_index_number(normalize_index_number(query))
+    search_filter = (
+        Q(full_name__icontains=query)
+        | Q(phone_number__icontains=query)
+        | Q(index_number_hash=hash_index_number(normalize_index_number(query)))
     )
+    if query.isdigit() and len(query) == 4:
+      search_filter |= Q(index_number_last_four_hash=hash_index_number_last_four(query))
+    students = Student.objects.filter(search_filter).order_by('full_name')
     for s in students[:10]:
       results.append({
           'id': s.id,
@@ -316,14 +321,14 @@ def add_marks_view(request):
     selected_student = Student.objects.filter(id=student_id).first()
 
   if query:
-    students = Student.objects.filter(
+    search_filter = (
         Q(full_name__icontains=query)
         | Q(phone_number__icontains=query)
-    ).order_by('full_name')
-    exact_index_match = Student.objects.filter(
-      index_number_hash=hash_index_number(normalize_index_number(query))
+        | Q(index_number_hash=hash_index_number(normalize_index_number(query)))
     )
-    students = (students | exact_index_match).order_by('full_name')[:10]
+    if query.isdigit() and len(query) == 4:
+      search_filter |= Q(index_number_last_four_hash=hash_index_number_last_four(query))
+    students = Student.objects.filter(search_filter).order_by('full_name')[:10]
 
   if request.method == 'POST' and selected_student:
     try:
