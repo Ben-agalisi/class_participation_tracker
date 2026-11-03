@@ -371,7 +371,16 @@ class StaffInvitationTests(TestCase):
 		get_user_model().objects.get(username='markrep').delete()
 
 		self.assertFalse(StaffSeat.objects.exists())
-		self.make_invitation(token='replacement-invitation-token')
+		add_url = reverse('admin:participation_staffinvitation_add')
+		self.assertEqual(self.client.get(add_url).status_code, 200)
+		with override_settings(
+				EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+				DEFAULT_FROM_EMAIL='noreply@example.test',
+		):
+			self.assertEqual(
+					self.client.post(add_url, {'email': 'rep@example.com'}).status_code,
+					302,
+			)
 		self.assertEqual(
 				StaffInvitation.objects.filter(email='rep@example.com').count(), 2
 		)
