@@ -36,7 +36,6 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() in {'1', 'true', 'yes'}
 if not DEBUG:
     required_production_settings = (
         'DJANGO_SECRET_KEY',
-        'DATABASE_URL',
         'INDEX_ENCRYPTION_KEY',
         'EMAIL_HOST',
         'EMAIL_HOST_USER',
