@@ -1,12 +1,13 @@
 import csv
 import hashlib
+import json
 import logging
 import os
 import secrets
 from datetime import timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from django import forms
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -269,16 +270,30 @@ def student_export_csv(request):
   return response
 
 
+def mocean_recipient_number(phone_number):
+  digits = ''.join(character for character in phone_number if character.isdigit())
+  if phone_number.strip().startswith('+'):
+    return digits
+  if digits.startswith('00'):
+    return digits[2:]
+  if digits.startswith('0'):
+    country_code = os.environ.get('SMS_DEFAULT_COUNTRY_CODE', '233').lstrip('+')
+    return f'{country_code}{digits[1:]}'
+  return digits
+
+
 def send_participation_sms(student, points_added):
   """Sends an automated SMS notification to the student's phone number."""
   if not student.phone_number:
     return 'no_phone'
 
-  gateway_url = os.environ.get('SMS_GATEWAY_URL')
-  api_key = os.environ.get('SMS_API_KEY')
+  gateway_url = os.environ.get(
+      'SMS_API_URL', 'https://rest.moceanapi.com/rest/2/sms'
+  )
+  api_token = os.environ.get('SMS_API_TOKEN')
   sender_id = os.environ.get('SMS_SENDER_ID')
-  if not gateway_url or not api_key or not sender_id:
-    logger.info('SMS gateway is not configured; notification was not sent.')
+  if not gateway_url or not api_token or not sender_id:
+    logger.info('Mocean SMS is not configured; notification was not sent.')
     return 'not_configured'
 
   current_time = timezone.localtime().strftime('%A, %d %B %Y at %I:%M %p')
@@ -290,19 +305,38 @@ def send_participation_sms(student, points_added):
   )
 
   parameters = urlencode({
-      'action': 'send-sms',
-      'api_key': api_key,
-      'to': student.phone_number,
-      'from': sender_id,
-      'sms': message,
+      'mocean-from': sender_id,
+      'mocean-to': mocean_recipient_number(student.phone_number),
+      'mocean-text': message,
   })
-  request_url = f'{gateway_url}?{parameters}'
+  sms_request = Request(
+      gateway_url,
+      data=parameters.encode('utf-8'),
+      headers={
+          'Authorization': f'Bearer {api_token}',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+      },
+      method='POST',
+  )
 
   try:
-    with urlopen(request_url, timeout=10):
-      pass
+    with urlopen(sms_request, timeout=10) as response:
+      response_body = response.read().decode('utf-8')
+      if response.status != 202:
+        logger.warning('Mocean SMS request returned HTTP %s.', response.status)
+        return 'failed'
+    result = json.loads(response_body)
   except (HTTPError, URLError, TimeoutError, OSError) as error:
-    logger.warning('SMS gateway request failed (%s).', type(error).__name__)
+    logger.warning('Mocean SMS request failed (%s).', type(error).__name__)
+    return 'failed'
+  except (UnicodeDecodeError, json.JSONDecodeError, AttributeError) as error:
+    logger.warning('Mocean SMS response could not be parsed (%s).', type(error).__name__)
+    return 'failed'
+
+  messages = result.get('messages', []) if isinstance(result, dict) else []
+  if not messages or any(message.get('status') != 0 for message in messages):
+    logger.warning('Mocean did not accept SMS for student record %s.', student.pk)
     return 'failed'
 
   logger.info('SMS notification sent for student record %s.', student.pk)

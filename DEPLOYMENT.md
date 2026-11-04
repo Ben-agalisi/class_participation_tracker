@@ -44,6 +44,19 @@ This project reads `DATABASE_URL` directly from the environment in `class_partic
 
 The index encryption key must remain unchanged. Changing or losing it prevents decrypting the stored index numbers. Back up the key separately from the database backup.
 
+## Mocean SMS setup
+
+The app sends an SMS after staff successfully save participation marks. It uses the phone number on the selected student record. For Mocean, create an API Token in the dashboard under **API Account > Generate Token**. Store the token and sender ID only in the environment, never in code or GitHub:
+
+```text
+SMS_API_URL=https://rest.moceanapi.com/rest/2/sms
+SMS_API_TOKEN=your-mocean-api-token
+SMS_SENDER_ID=your-approved-sender-id
+SMS_DEFAULT_COUNTRY_CODE=233
+```
+
+On EC2, add these values to `/home/ubuntu/class_participation_tracker/.env`, save the file, and run `sudo systemctl restart class-participation`. Mocean expects recipient numbers with a country code. The app converts Ghana local numbers beginning with `0` to `233...`; numbers already beginning with `+` or an international prefix are sent in international form. Change `SMS_DEFAULT_COUNTRY_CODE` only if local numbers are from a different country. Mocean must approve the sender ID for your account and destination country. The app treats a message as accepted only when Mocean returns HTTP 202 and message status 0; acceptance is not a delivery receipt.
+
 ## Migration and deployment commands
 
 Run these from the project directory on the deployment host, with the environment variables configured:

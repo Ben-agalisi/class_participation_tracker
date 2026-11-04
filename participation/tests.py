@@ -1,7 +1,7 @@
 import os
 from types import SimpleNamespace
 from unittest.mock import patch
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -22,30 +22,49 @@ class ParticipationSmsTests(SimpleTestCase):
 				phone_number='0241234567',
 		)
 
-	def test_sends_arkesel_get_request(self):
+	def test_sends_mocean_authenticated_post_request(self):
 		with patch.dict(os.environ, {
-				'SMS_GATEWAY_URL': 'https://sms.arkesel.com/sms/api',
-				'SMS_API_KEY': 'test-key',
+				'SMS_API_URL': 'https://rest.moceanapi.com/rest/2/sms',
+				'SMS_API_TOKEN': 'test-token',
 				'SMS_SENDER_ID': 'COM_ARCH',
 		}), patch('participation.admin.urlopen') as gateway_call:
+			response = gateway_call.return_value.__enter__.return_value
+			response.status = 202
+			response.read.return_value = b'{"messages":[{"status":0,"receiver":"233241234567"}]}'
 			result = send_participation_sms(self.student, 2)
 
 		self.assertEqual(result, 'sent')
-		request_url = gateway_call.call_args.args[0]
-		parsed_url = urlparse(request_url)
-		self.assertEqual(parsed_url.netloc, 'sms.arkesel.com')
-		self.assertEqual(parsed_url.path, '/sms/api')
-		parameters = parse_qs(parsed_url.query)
-		self.assertEqual(parameters['action'], ['send-sms'])
-		self.assertEqual(parameters['api_key'], ['test-key'])
-		self.assertEqual(parameters['to'], [self.student.phone_number])
-		self.assertEqual(parameters['from'], ['COM_ARCH'])
-		self.assertIn('2 marks', parameters['sms'][0])
+		sms_request = gateway_call.call_args.args[0]
+		self.assertEqual(sms_request.full_url, 'https://rest.moceanapi.com/rest/2/sms')
+		self.assertEqual(sms_request.method, 'POST')
+		self.assertEqual(sms_request.get_header('Authorization'), 'Bearer test-token')
+		parameters = parse_qs(sms_request.data.decode('utf-8'))
+		self.assertEqual(parameters['mocean-to'], ['233241234567'])
+		self.assertEqual(parameters['mocean-from'], ['COM_ARCH'])
+		self.assertIn('2 marks', parameters['mocean-text'][0])
+
+	def test_does_not_report_success_when_mocean_rejects_message(self):
+		with patch.dict(os.environ, {
+				'SMS_API_TOKEN': 'test-token',
+				'SMS_SENDER_ID': 'COM_ARCH',
+		}), patch('participation.admin.urlopen') as gateway_call:
+			response = gateway_call.return_value.__enter__.return_value
+			response.status = 202
+			response.read.return_value = b'{"messages":[{"status":1,"err_msg":"Rejected"}]}'
+			result = send_participation_sms(self.student, 1)
+
+		self.assertEqual(result, 'failed')
+
+	def test_formats_international_phone_numbers_for_mocean(self):
+		from .admin import mocean_recipient_number
+
+		self.assertEqual(mocean_recipient_number('+233 24 123 4567'), '233241234567')
+		self.assertEqual(mocean_recipient_number('0241234567'), '233241234567')
+		self.assertEqual(mocean_recipient_number('00233241234567'), '233241234567')
 
 	def test_does_not_send_without_gateway_configuration(self):
 		with patch.dict(os.environ, {
-				'SMS_GATEWAY_URL': '',
-				'SMS_API_KEY': '',
+				'SMS_API_TOKEN': '',
 		}), patch('participation.admin.urlopen') as gateway_call:
 			result = send_participation_sms(self.student, 1)
 
