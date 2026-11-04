@@ -463,8 +463,13 @@ class StaffInvitationTests(TestCase):
 	@override_settings(
 			EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
 			DEFAULT_FROM_EMAIL='noreply@example.test',
+			STAFF_INVITATION_TTL_MINUTES=2,
 	)
 	def test_superuser_invitation_emails_private_claim_link(self):
+		from datetime import timedelta
+		from django.utils import timezone
+
+		started_at = timezone.now()
 		response = self.client.post(
 				reverse('admin:participation_staffinvitation_add'),
 				{'email': 'rep@example.com'},
@@ -474,7 +479,11 @@ class StaffInvitationTests(TestCase):
 		self.assertEqual(len(mail.outbox), 1)
 		self.assertIn('rep@example.com', mail.outbox[0].to)
 		self.assertIn('/staff-signup/?token=', mail.outbox[0].body)
+		self.assertIn('expires in 2 minute(s)', mail.outbox[0].body)
 		invitation = StaffInvitation.objects.get(email='rep@example.com')
+		self.assertGreaterEqual(
+				invitation.expires_at, started_at + timedelta(minutes=2)
+		)
 		self.assertEqual(len(invitation.token_hash), 64)
 		self.assertNotIn(invitation.token_hash, mail.outbox[0].body)
 
@@ -487,6 +496,41 @@ class StaffInvitationTests(TestCase):
 		)
 
 		self.assertEqual(response.status_code, 403)
+
+
+class AdminSessionExpiryTests(TestCase):
+	def setUp(self):
+		self.admin_user = get_user_model().objects.create_superuser(
+				username='sessionadmin',
+				password='test-password',
+				email='sessionadmin@example.com',
+		)
+		self.client.force_login(self.admin_user)
+
+	def test_admin_session_settings_require_short_session_cookie(self):
+		from django.conf import settings
+
+		self.assertEqual(settings.SESSION_COOKIE_AGE, 120)
+		self.assertTrue(settings.SESSION_EXPIRE_AT_BROWSER_CLOSE)
+		self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
+
+	def test_expired_admin_session_requires_login_again(self):
+		from datetime import timedelta
+		from django.utils import timezone
+
+		session = self.client.session
+		session.set_expiry(timezone.now() - timedelta(seconds=1))
+		session.save()
+
+		response = self.client.get(reverse('admin:index'))
+
+		self.assertEqual(response.status_code, 302)
+		self.assertIn('/admin/login/', response['Location'])
+
+	def test_admin_pages_are_not_cached(self):
+		response = self.client.get(reverse('admin:index'))
+
+		self.assertIn('no-store', response['Cache-Control'])
 
 
 class PasswordRecoveryTests(TestCase):

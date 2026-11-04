@@ -46,7 +46,7 @@ def send_staff_invitation(invitation, request, token=None):
   token = token or secrets.token_urlsafe(32)
   invitation.token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
   invitation.expires_at = timezone.now() + timedelta(
-      hours=settings.STAFF_INVITATION_TTL_HOURS
+      minutes=settings.STAFF_INVITATION_TTL_MINUTES
   )
   invitation.save(update_fields=['token_hash', 'expires_at'])
 
@@ -57,14 +57,14 @@ def send_staff_invitation(invitation, request, token=None):
   message = (
       'You have been invited to create the class participation mark-entry account.\n\n'
       f'Use this private link to choose your username and password:\n{invite_url}\n\n'
-      f'The link expires in {settings.STAFF_INVITATION_TTL_HOURS} hours and can be used once. '
+      f'The link expires in {settings.STAFF_INVITATION_TTL_MINUTES} minute(s) and can be used once. '
       'If you were not expecting this invitation, ignore this message.'
   )
 
   if settings.DEBUG:
     print('\n=== STAFF INVITATION LINK ===')
     print(f'This is your invitation link: {invite_url}')
-    print(f'Expires in: {settings.STAFF_INVITATION_TTL_HOURS} hours')
+    print(f'Expires in: {settings.STAFF_INVITATION_TTL_MINUTES} minute(s)')
     print('============================\n')
 
   send_mail(
@@ -113,7 +113,7 @@ class StaffInvitationAdmin(admin.ModelAdmin):
     token = secrets.token_urlsafe(32)
     obj.token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
     obj.expires_at = timezone.now() + timedelta(
-        hours=settings.STAFF_INVITATION_TTL_HOURS
+      minutes=settings.STAFF_INVITATION_TTL_MINUTES
     )
     super().save_model(request, obj, form, change)
     try:

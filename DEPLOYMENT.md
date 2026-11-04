@@ -64,7 +64,9 @@ Student records are stored in Supabase PostgreSQL. Django's `/admin/` remains st
 
 ## Single staff account invitation
 
-Only the superuser can create a staff invitation. After migrations and email configuration, run `python manage.py setup_mark_entry_role` once, then sign in at `/admin/` and add a **Staff invitation** with the approved person's email. The app emails a private one-time link that expires after `STAFF_INVITATION_TTL_HOURS` (default 24 hours). The invited person chooses their own username and password at `/staff-signup/?token=...`.
+Only the superuser can create a staff invitation. After migrations and email configuration, run `python manage.py setup_mark_entry_role` once, then sign in at `/admin/` and add a **Staff invitation** with the approved person's email. The app emails a private one-time link that expires after `STAFF_INVITATION_TTL_MINUTES` (default 2 minutes). The invited person chooses their own username and password at `/staff-signup/?token=...`.
+
+Admin sessions expire after two minutes without activity and when the browser is closed. Active requests refresh the inactivity timer. Navigating between admin pages while active does not require signing in again.
 
 The claim is transactional and the database enforces a single staff seat. The new user is assigned only the configured `MARK_ENTRY_GROUP_NAME` role, which can view students/logs and award marks through the validated workflow. It cannot manage users, groups, or permissions. The superuser can see the account's username, email, status, role, and activity metadata, but never the password; Django stores only a salted password hash.
 

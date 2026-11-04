@@ -62,7 +62,7 @@ ALLOWED_HOSTS = [
     for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
     if host.strip()
 ]
-STAFF_INVITATION_TTL_HOURS = int(os.environ.get('STAFF_INVITATION_TTL_HOURS', '24'))
+STAFF_INVITATION_TTL_MINUTES = int(os.environ.get('STAFF_INVITATION_TTL_MINUTES', '2'))
 MARK_ENTRY_GROUP_NAME = os.environ.get('MARK_ENTRY_GROUP_NAME', 'Mark Entry Staff')
 
 
@@ -107,6 +107,10 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'class_participation.wsgi.application'
+
+SESSION_COOKIE_AGE = 120
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Database
